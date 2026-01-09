@@ -4,18 +4,16 @@ import datetime
 
 app = Flask(__name__)
 
-# بيانات تليجرام الخاصة بك
 TOKEN = "8542169427:AAHv1JELHFp0Lreea9nhZMN2hY1pBfKC1rA"
 CHAT_ID = "8319449101"
 
 def get_prices():
     try:
-        # جلب سعر البيتكوين
         btc_url = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
         data = requests.get(btc_url, timeout=5).json()
         return data['price']
     except:
-        return "جاري التحديث..."
+        return "0.00"
 
 @app.route('/')
 def home():
@@ -36,9 +34,9 @@ def home():
     <body>
         <div class="card">
             <h2>Won Mony Global V8</h2>
-            <p>سعر البيتكوين الآن:</p>
+            <p>سعر البيتكوين الآن (BTC):</p>
             <div class="price">${float(btc_price):,.2f}</div>
-            <p>توقيت السيرفر: {now}</p>
+            <p>توقيت التحديث: {now}</p>
             <button onclick="location.reload()">تحديث السعر المباشر</button>
         </div>
     </body>
