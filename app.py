@@ -45,3 +45,12 @@ def home():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
+def get_prices():
+    try:
+        # إضافة headers لتجنب حظر السيرفرات المجانية
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        btc_url = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+        data = requests.get(btc_url, headers=headers, timeout=10).json()
+        return data['price']
+    except Exception as e:
+        return "0.00"
