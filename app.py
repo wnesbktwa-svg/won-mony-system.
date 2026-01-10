@@ -1,8 +1,9 @@
 from flask import Flask, render_template_string, request
+import os
 
 app = Flask(__name__)
 
-# بيانات الإحصائيات والسعر
+# بيانات السعر والزيارات
 app_stats = {"total_visits": 0, "market_rate": 8.79}
 
 @app.route('/', methods=['GET', 'POST'])
@@ -18,67 +19,31 @@ def home():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Won Mony V18 - Live Profit</title>
+        <title>Won Mony V18 - Fixed</title>
         
         <script type='text/javascript' src='https://pl28441931.effectiveratecpm.com/7d/5d/7c/7d5d7c80528441931.js'></script>
         
         <style>
             body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 10px; }
             .main-box { border: 2px solid #d4af37; border-radius: 20px; padding: 20px; max-width: 400px; margin: auto; background: #0a0a0a; }
-            .price-card { background: #111; padding: 15px; border-radius: 15px; margin-top: 10px; border: 1px solid #222; }
             .val { font-size: 26px; font-weight: bold; }
             .gold { color: #d4af37; } .green { color: #0f0; }
-            .admin-stats { background: #050505; margin-top: 50px; padding: 20px; font-size: 11px; border-top: 1px solid #222; }
         </style>
-        <script>
-            let offRate = 4.85;
-            const bmRate = {{ current_rate }};
-            async function load() {
-                try {
-                    const res = await fetch('https://open.er-api.com/v6/latest/USD');
-                    const data = await res.json();
-                    offRate = data.rates.LYD;
-                    calc(100);
-                } catch(e) { calc(100); }
-            }
-            function calc(usd) {
-                if(!usd) usd = 0;
-                let o = (usd * offRate).toFixed(2);
-                let b = (usd * bmRate).toFixed(2);
-                document.getElementById('o-v').innerText = o + ' د.ل';
-                document.getElementById('b-v').innerText = b + ' د.ل';
-                document.getElementById('d-v').innerText = (b - o).toFixed(2) + ' د.ل';
-            }
-            window.onload = load;
-        </script>
     </head>
     <body>
-        <h2 class="gold">WON MONY PRO <span style="font-size:10px;">V18</span></h2>
+        <h2 class="gold">WON MONY PRO V18</h2>
         <div class="main-box">
-            <input type="number" id="in" placeholder="100" oninput="calc(this.value)" 
-                   style="width:85%; padding:15px; background:#111; color:#fff; border:1px solid #333; border-radius:12px; text-align:center; font-size:24px;">
-            <div class="price-card">
-                <div style="font-size:11px; color:#555;">سعر المصرف</div>
-                <div id="o-v" class="val green">...</div>
-            </div>
-            <div class="price-card">
-                <div style="font-size:11px; color:#555;">سعر السوق الموازي</div>
-                <div id="b-v" class="val gold">...</div>
-            </div>
-            <div class="price-card" style="border-style: dashed; border-color: #d4af37;">
-                <div id="d-v" class="val">...</div>
-            </div>
+            <p>السعر الموازي الحالي: <span class="gold">{{ market_rate }} د.ل</span></p>
+            <div style="font-size: 12px; color: #555;">إذا ظهرت هذه الشاشة، فالسيرفر يعمل بنجاح!</div>
         </div>
-        <div class="admin-stats">
-            📊 إحصائيات الإدارة: زيارات اليوم ({{ total_visits }})
-            <form method="POST" style="margin-top:10px;">
-                تعديل السعر: <input type="number" step="0.01" name="new_rate" value="{{ current_rate }}" style="width:60px;">
-                <button type="submit">تحديث</button>
-            </form>
+        <div style="margin-top: 30px; font-size: 10px; color: #222;">
+            إحصائيات الزيارات: {{ total_visits }}
         </div>
     </body>
     </html>
-    ''', current_rate=app_stats["market_rate"], total_visits=app_stats["total_visits"])
+    ''', market_rate=app_stats["market_rate"], total_visits=app_stats["total_visits"])
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    # هذا السطر مهم جداً لبيئة Render
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
