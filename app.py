@@ -1,15 +1,18 @@
 from flask import Flask, render_template_string, request
+import os
 
 app = Flask(__name__)
 
-# متغير عالمي لحفظ سعر السوق الموازي (يمكن تغييره من لوحة التحكم)
+# السعر الحالي للسوق الموازي
 market_data = {"usd_to_lyd": 8.77}
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    # لوحة تحكم بسيطة لتحديث السعر يدوياً إذا أردت
     if request.method == 'POST' and request.form.get('new_rate'):
-        market_data["usd_to_lyd"] = float(request.form.get('new_rate'))
+        try:
+            market_data["usd_to_lyd"] = float(request.form.get('new_rate'))
+        except:
+            pass
 
     return render_template_string('''
     <!DOCTYPE html>
@@ -17,65 +20,42 @@ def home():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Won Mony V15 - Libya Gold</title>
+        <title>Won Mony Gold V15</title>
         <style>
-            :root { --main-gold: #d4af37; --main-green: #00ff00; }
             body { 
-                background: #000 url('https://www.transparenttextures.com/patterns/dark-matter.png'); 
-                color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                margin: 0; padding: 20px; overflow-x: hidden;
+                background: #000; color: #fff; font-family: sans-serif; 
+                text-align: center; padding: 20px;
+                background-image: radial-gradient(circle, #1a1a1a 10%, #000 90%);
             }
-            /* خلفية خريطة ليبيا الباهتة */
-            .bg-map {
-                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                width: 90%; opacity: 0.1; z-index: -1; pointer-events: none;
-            }
-            .header { color: var(--main-gold); text-shadow: 0 0 15px var(--main-gold); margin-bottom: 5px; }
-            .sub-header { color: #666; font-size: 12px; margin-bottom: 25px; }
-            
             .main-box {
-                background: rgba(10, 10, 10, 0.9); border: 1px solid var(--main-gold);
-                border-radius: 25px; padding: 25px; max-width: 450px; margin: auto;
-                box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+                border: 2px solid #d4af37; border-radius: 25px;
+                padding: 25px; max-width: 400px; margin: auto;
+                background: rgba(0,0,0,0.8); box-shadow: 0 0 20px rgba(212,175,55,0.3);
             }
-            
-            input[type="number"] {
-                width: 90%; padding: 15px; border-radius: 15px; border: 1px solid #333;
-                background: #1a1a1a; color: #fff; font-size: 24px; text-align: center; outline: none;
+            .header { color: #d4af37; text-shadow: 0 0 10px #d4af37; }
+            input {
+                width: 80%; padding: 15px; border-radius: 12px; border: 1px solid #333;
+                background: #111; color: #fff; font-size: 22px; text-align: center;
             }
-            
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
-            .card { 
-                background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 20px; 
-                border: 1px solid #222; transition: 0.3s;
-            }
-            .card:hover { border-color: var(--main-gold); }
-            
-            .val { font-size: 22px; font-weight: bold; margin-top: 5px; }
-            .green { color: var(--main-green); }
-            .gold { color: var(--main-gold); }
-            
+            .card { background: #111; padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px solid #222; }
+            .gold { color: #d4af37; font-weight: bold; font-size: 24px; }
+            .green { color: #00ff00; font-weight: bold; font-size: 24px; }
             .share-btn {
-                background: linear-gradient(45deg, #25D366, #128C7E); color: white;
-                border: none; padding: 18px; border-radius: 15px; width: 100%;
-                font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 20px;
+                background: #25D366; color: white; border: none; padding: 15px;
+                border-radius: 12px; width: 100%; font-weight: bold; margin-top: 20px; cursor: pointer;
             }
-
-            /* لوحة التحكم المخفية بالأسفل */
-            .admin-panel { margin-top: 50px; padding: 10px; border-top: 1px dashed #222; font-size: 10px; }
-            .admin-panel input { width: 60px; font-size: 10px; padding: 2px; }
         </style>
         <script>
-            let officialRate = 0;
-            const blackMarketRate = {{ current_market_rate }}; 
+            let officialRate = 4.85; // قيمة افتراضية في حال فشل الـ API
+            const blackMarketRate = {{ current_market_rate }};
 
             async function loadRates() {
                 try {
                     const res = await fetch('https://open.er-api.com/v6/latest/USD');
                     const data = await res.json();
                     officialRate = data.rates.LYD;
-                    updateValues(100); 
-                } catch (e) { document.body.innerHTML += "خطأ في الشبكة"; }
+                    updateValues(100);
+                } catch (e) { updateValues(100); }
             }
 
             function updateValues(usd) {
@@ -88,7 +68,7 @@ def home():
                 document.getElementById('bm-val').innerText = bmVal + ' د.ل';
                 document.getElementById('diff-val').innerText = diff + ' د.ل';
                 
-                let msg = `*تقرير Won Mony V15*%0Aالمبلغ: ${usd}$%0Aالسعر الموازي: ${bmVal} د.ل%0Aالفارق المالي: ${diff} د.ل`;
+                let msg = `*تقرير Won Mony*%0Aالمبلغ: ${usd}$%0Aالسعر الموازي: ${bmVal} د.ل%0Aالفارق: ${diff} د.ل`;
                 document.getElementById('whatsapp-link').onclick = () => {
                     window.open(`https://wa.me/?text=${msg}`, '_blank');
                 };
@@ -97,40 +77,31 @@ def home():
         </script>
     </head>
     <body>
-        <img class="bg-map" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Flag_map_of_Libya.svg/1200px-Flag_map_of_Libya.svg.png">
-        
         <h1 class="header">WON MONY GOLD</h1>
-        <div class="sub-header">نظام التاجر الليبي الذكي - الإصدار V15</div>
-
         <div class="main-box">
-            <div style="color: #888; margin-bottom: 10px;">أدخل القيمة بالدولار</div>
+            <p style="color:#888;">أدخل القيمة بالدولار</p>
             <input type="number" id="input" placeholder="100" oninput="updateValues(this.value)">
             
-            <div class="grid">
-                <div class="card">
-                    <div style="font-size: 10px; color: #666;">سعر المصرف</div>
-                    <div id="off-val" class="val green">...</div>
-                </div>
-                <div class="card">
-                    <div style="font-size: 10px; color: #666;">سعر الكاش</div>
-                    <div id="bm-val" class="val gold">...</div>
-                </div>
+            <div class="card">
+                <div style="font-size:12px; color:#666;">سعر المصرف</div>
+                <div id="off-val" class="green">...</div>
+            </div>
+            <div class="card">
+                <div style="font-size:12px; color:#666;">سعر السوق الموازي</div>
+                <div id="bm-val" class="gold">...</div>
+            </div>
+            <div class="card">
+                <div style="font-size:12px; color:#666;">الفارق المالي</div>
+                <div id="diff-val" style="font-size:24px;">...</div>
             </div>
 
-            <div class="card" style="margin-top: 15px; border-style: dashed;">
-                <div style="font-size: 11px; color: #666;">الفارق المالي (الربح)</div>
-                <div id="diff-val" style="font-size: 28px; font-weight: bold;">...</div>
-            </div>
-
-            <button id="whatsapp-link" class="share-btn">مشاركة التقرير عبر واتساب ✅</button>
+            <button id="whatsapp-link" class="share-btn">إرسال التقرير عبر واتساب</button>
         </div>
-
-        <div class="admin-panel">
+        <div style="margin-top:40px; font-size:10px; color:#333;">
             <form method="POST">
-                لوحة التحكم: تحديث سعر السوق الحالي <input type="number" step="0.01" name="new_rate" placeholder="{{ current_market_rate }}">
-                <button type="submit" style="font-size: 10px;">تحديث</button>
+                تحديث السعر يدوياً: <input type="number" step="0.01" name="new_rate" style="width:60px; font-size:10px; padding:2px;">
+                <button type="submit" style="font-size:10px;">حفظ</button>
             </form>
-            <p>Powered by Won Mony Labs | System Live</p>
         </div>
     </body>
     </html>
