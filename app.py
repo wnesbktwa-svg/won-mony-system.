@@ -9,7 +9,6 @@ CHAT_ID = "8319449101"
 
 def get_prices():
     try:
-        # استخدام مصدر بديل وموثوق للسيرفرات المجانية
         btc_url = "https://api.coindesk.com/v1/bpi/currentprice.json"
         data = requests.get(btc_url, timeout=10).json()
         return data['bpi']['USD']['rate_float']
@@ -25,14 +24,12 @@ def send_to_telegram(text):
 
 @app.route('/')
 def home():
-    price = get_prices()
+    price_val = get_prices()
     now = datetime.datetime.now().strftime("%H:%M:%S")
+    formatted_price = "{:,.2f}".format(price_val)
+    send_to_telegram(f"💹 Won Mony: BTC Price is ${formatted_price}")
     
-    # تنسيق الرسالة والسعر
-    formatted_price = "{:,.2f}".format(price)
-    send_to_telegram(f"💹 تحديث حي: سعر البيتكوين الآن هو ${formatted_price}")
-    
-    return render_template_string('''
+    html_template = '''
     <html>
     <head>
         <meta charset="UTF-8">
@@ -54,7 +51,8 @@ def home():
         </div>
     </body>
     </html>
-    ''')
+    '''
+    return render_template_string(html_template)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
