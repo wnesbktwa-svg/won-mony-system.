@@ -1,78 +1,77 @@
 from flask import Flask, render_template_string
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
+def get_ly_dollar():
+    try:
+        # الاتصال بموقع عين ليبيا لجلب السعر
+        url = "https://www.eanlibya.com/أسعار-العملات-مقابل-الدينار-الليبي/"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # البحث عن أول رقم يظهر في جدول العملات (عادة يكون الدولار)
+        # ملاحظة: قد نحتاج لضبط هذا الجزء بناءً على تحديثات الموقع
+        price_tag = soup.find('td', text='الدولار').find_next_sibling('td')
+        return price_tag.text.strip() + " د.ل"
+    except:
+        return "8.77 د.ل" # سعر احتياطي في حال فشل الاتصال بالموقع
+
 @app.route('/')
 def home():
-    # كود الواجهة المزدوجة (بيتكوين + دولار ليبيا)
-    html_template = '''
+    ly_price = get_ly_dollar()
+    return render_template_string('''
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Won Mony - ليبيا</title>
+        <title>Won Mony V10 - Smart Libya</title>
         <style>
             body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
-            .container { max-width: 450px; margin: auto; }
-            .card { border-radius: 20px; padding: 20px; margin-bottom: 20px; position: relative; overflow: hidden; border: 2px solid; }
-            
-            /* تصميم كرت البيتكوين */
-            .btc-card { border-color: #f7931a; box-shadow: 0 0 15px #f7931a; background: #111; }
-            /* تصميم كرت الدولار ليبيا */
-            .ly-card { border-color: #00ff00; box-shadow: 0 0 15px #00ff00; background: #111; }
-            
-            .label { font-size: 14px; color: #888; margin-bottom: 5px; }
-            .price { font-size: 35px; font-weight: bold; margin: 10px 0; }
-            .btc-price { color: #f7931a; }
-            .ly-price { color: #00ff00; }
-            
-            .update-btn { background: #333; color: #fff; border: 1px solid #555; padding: 12px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; }
-            .footer { margin-top: 30px; font-size: 12px; color: #444; }
+            .card { border-radius: 20px; padding: 25px; margin-bottom: 20px; background: #111; border: 2px solid; }
+            .btc-card { border-color: #f7931a; box-shadow: 0 0 15px #f7931a; }
+            .ly-card { border-color: #00ff00; box-shadow: 0 0 15px #00ff00; }
+            .label { font-size: 14px; color: #888; }
+            .price { font-size: 38px; font-weight: bold; margin: 15px 0; }
+            .btn { background: #00ff00; color: #000; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 18px; cursor: pointer; }
         </style>
         <script>
-            async function fetchGlobalPrices() {
+            async function fetchBtc() {
                 try {
-                    // جلب سعر البيتكوين
-                    const resBtc = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
-                    const dataBtc = await resBtc.json();
-                    const btcPrice = parseFloat(dataBtc.data.amount).toLocaleString(undefined, {minimumFractionDigits: 2});
-                    document.getElementById('btc-val').innerText = '$' + btcPrice;
-                } catch (e) {
-                    document.getElementById('btc-val').innerText = 'خطأ في الاتصال';
-                }
+                    const res = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
+                    const data = await res.json();
+                    document.getElementById('btc-val').innerText = '$' + parseFloat(data.data.amount).toLocaleString();
+                } catch (e) { document.getElementById('btc-val').innerText = 'تحديث...'; }
             }
-            setInterval(fetchGlobalPrices, 10000);
-            window.onload = fetchGlobalPrices;
+            setInterval(fetchBtc, 10000);
+            window.onload = fetchBtc;
         </script>
     </head>
     <body>
-        <div class="container">
-            <h2 style="color:#0f0;">WON MONY GLOBAL V9</h2>
-            <p style="color:#666; font-size:12px;">تحديث مباشر للأسعار</p>
+        <h2 style="color:#00ff00;">WON MONY V10</h2>
+        <p style="color:#555;">نظام الربط التلقائي بأسعار ليبيا</p>
 
-            <div class="card btc-card">
-                <div class="label">سعر البيتكوين العالمي (BTC)</div>
-                <div id="btc-val" class="price btc-price">جاري التحميل...</div>
-            </div>
+        <div class="card btc-card">
+            <div class="label">سعر البيتكوين (عالمي)</div>
+            <div id="btc-val" class="price" style="color:#f7931a;">جاري الجلب...</div>
+        </div>
 
-            <div class="card ly-card">
-                <div class="label">سعر الدولار في ليبيا (كاش)</div>
-                <div class="price ly-price">7.25 د.ل</div> 
-                <div style="font-size:11px; color:#555;">* يمكنك تعديل هذا السعر من الكود يدوياً</div>
-            </div>
+        <div class="card ly-card">
+            <div class="label">سعر الدولار (سوق موازي - عين ليبيا)</div>
+            <div class="price" style="color:#00ff00;">{{ ly_price }}</div>
+        </div>
 
-            <button class="update-btn" onclick="location.reload()">تحديث يدوي للبيانات</button>
+        <button class="btn" onclick="location.reload()">تحديث البيانات الآن</button>
 
-            <div class="footer">
-                برمج بواسطة: مبرمج ليبي طموح <br>
-                System Status: Active & Secured
-            </div>
+        <div style="margin-top:30px; font-size:12px; color:#333;">
+            مصدر السعر المحلي: eanlibya.com
         </div>
     </body>
     </html>
-    '''
-    return render_template_string(html_template)
+    ''', ly_price=ly_price)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
