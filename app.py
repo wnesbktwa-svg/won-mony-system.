@@ -2,88 +2,66 @@ from flask import Flask, render_template_string, request
 import datetime
 
 app = Flask(__name__)
-
-# قاعدة البيانات الحالية
-data = {
-    'bank': 2707.71,
-    'market': 8.79,
-    'gold_18': 415.00,
-    'gold_24': 485.00,
-    'visitors': 65, # تحديث بناءً على صورتك الأخيرة
-    'time': datetime.datetime.now().strftime("%H:%M:%S")
-}
+# البيانات الأولية
+d = {'m': 8.79, 'b': 2707.71, 'g18': 415.0, 'v': 65}
 
 @app.route('/', methods=['GET', 'POST'])
-def home():
-    global data
+def index():
+    global d
     res = ""
-    # تحديث الأسعار من لوحة الإدارة
-    if request.method == 'POST' and 'upd' in request.form:
-        if request.form.get('m'): data['market'] = float(request.form.get('m'))
-        if request.form.get('g'): data['gold_18'] = float(request.form.get('g'))
+    # لوحة الإدارة المخفية (تحديث الأسعار)
+    if request.method == 'POST' and 'up' in request.form:
+        if request.form.get('nm'): d['m'] = float(request.form.get('nm'))
+        if request.form.get('ng'): d['g18'] = float(request.form.get('ng'))
     
-    # حساب الدولار
-    amount = request.form.get('amt', '')
-    if request.method == 'POST' and amount and 'calc' in request.form:
-        res = f"الإجمالي: {float(amount) * data['market']:.2f} د.ل"
+    # الحاسبة
+    amt = request.form.get('amt', '')
+    if request.method == 'POST' and amt and 'cl' in request.form:
+        res = f"الإجمالي: {float(amt) * d['m']:.2f} د.ل"
 
     html = """
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>WON MONY PRO V24</title>
+        <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WON MONY V25</title>
         <script type='text/javascript' src='https://pl28441931.effectivegatecpm.com/09/6d/f2/096df26bc56135a70590947b2dd0347d.js'></script>
         <style>
-            body { background:#000; color:#ffca28; font-family:sans-serif; margin:0; text-align:center; }
-            .nav { display:flex; justify-content:space-around; background:#111; padding:15px; border-bottom:2px solid #ffca28; position:sticky; top:0; }
-            .nav a { color:#ffca28; text-decoration:none; font-weight:bold; font-size:13px; }
-            .container { padding:15px; max-width:450px; margin:auto; }
-            .card { background:#111; border:2px solid #ffca28; border-radius:15px; padding:15px; margin-bottom:15px; }
-            .row { display:flex; justify-content:space-between; background:#222; padding:10px; border-radius:8px; margin:5px 0; }
-            input { width:70%; padding:10px; border-radius:8px; border:1px solid #ffca28; background:#000; color:#fff; margin:10px 0; }
-            button { background:#ffca28; color:#000; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer; }
-            .admin { border:1px dashed #444; padding:10px; margin-top:30px; font-size:11px; }
+            body { background:#000; color:#ffca28; font-family:sans-serif; text-align:center; margin:0; }
+            .nav { display:flex; justify-content:space-around; background:#111; padding:12px; border-bottom:1px solid #ffca28; position:sticky; top:0; }
+            .nav a { color:#ffca28; text-decoration:none; font-size:12px; font-weight:bold; }
+            .card { background:#111; border:1px solid #ffca28; border-radius:12px; padding:15px; margin:10px; }
+            .row { display:flex; justify-content:space-between; margin:8px 0; font-size:18px; }
+            input { width:80%; padding:10px; border-radius:8px; border:1px solid #ffca28; background:#000; color:#fff; }
+            button { background:#ffca28; color:#000; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; margin-top:10px; }
         </style>
     </head>
     <body>
-        <div class="nav">
-            <a href="#prices">📈 الأسعار</a>
-            <a href="#gold">🟡 الذهب</a>
-            <a href="#calc">🧮 الحاسبة</a>
+        <div class="nav"><a href="#">📉 الأسعار</a><a href="#gold">🟡 الذهب</a><a href="#calc">🧮 الحاسبة</a></div>
+        <div class="card">
+            <h2>WON MONY PRO <span style="color:#fff">V25</span></h2>
+            <div class="row"><span>الموازي</span><span>{{d.m}} د.ل</span></div>
+            <div class="row"><span>المصرف</span><span style="color:#4caf50;">{{d.b}}</span></div>
         </div>
-        <div class="container">
-            <h2 id="prices">WON MONY PRO <span style="color:#fff">V24</span></h2>
-            <div class="card">
-                <div class="row"><span>السوق الموازي</span><span style="color:#fff; font-weight:bold;">{{d.market}} د.ل</span></div>
-                <div class="row"><span>سعر المصرف</span><span style="color:#4caf50;">{{d.bank}} د.ل</span></div>
-            </div>
-            <div class="card" id="gold">
-                <h3>أسعار الذهب (جرام)</h3>
-                <div class="row"><span>عيار 18 (كسر)</span><span style="color:#fff;">{{d.gold_18}} د.ل</span></div>
-                <div class="row"><span>عيار 24 (جديد)</span><span style="color:#fff;">{{d.gold_24}} د.ل</span></div>
-            </div>
-            <div class="card" id="calc">
-                <h3>حاسبة العملات</h3>
-                <form method="POST"><input type="number" name="amt" step="any" placeholder="المبلغ بالدولار" value="{{a}}">
-                <button type="submit" name="calc">تحويل</button></form>
-                {% if r %}<p style="color:#4caf50;">{{r}}</p>{% endif %}
-            </div>
-            <div class="admin">
-                <p>⚙️ لوحة الإدارة</p>
-                <form method="POST">
-                    <input type="number" name="m" step="0.01" placeholder="سعر دولار جديد" style="width:40%">
-                    <input type="number" name="g" step="0.1" placeholder="سعر ذهب جديد" style="width:40%">
-                    <button type="submit" name="upd" style="width:90%; background:#333; color:#fff;">تحديث الكل</button>
-                </form>
-                <p>الزيارات: {{d.visitors}} | الوقت: {{d.time}}</p>
-            </div>
+        <div class="card" id="gold">
+            <h3>الذهب (جرام 18)</h3>
+            <div class="row"><span>السعر</span><span>{{d.g18}} د.ل</span></div>
         </div>
-    </body>
-    </html>
+        <div class="card" id="calc">
+            <form method="POST"><input type="number" name="amt" placeholder="المبلغ بالدولار" value="{{a}}">
+            <button type="submit" name="cl">إحسب القيمة</button></form>
+            {% if r %}<p style="color:#4caf50;">{{r}}</p>{% endif %}
+        </div>
+        <div style="font-size:10px; color:#444; margin-top:20px; border:1px dashed #333; padding:10px;">
+            لوحة الإدارة: <form method="POST">
+            <input type="number" name="nm" placeholder="تحديث الدولار" style="width:30%">
+            <input type="number" name="ng" placeholder="تحديث الذهب" style="width:30%">
+            <button type="submit" name="up" style="font-size:10px; padding:5px;">تحديث</button></form>
+            الزيارات: {{d.v}}
+        </div>
+    </body></html>
     """
-    return render_template_string(html, d=data, r=res, a=amount)
+    return render_template_string(html, d=d, r=res, a=amt)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
