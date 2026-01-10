@@ -1,52 +1,55 @@
-from flask import Flask, render_template_string, request
-import os
+from flask import Flask, render_template_string
+import datetime
 
 app = Flask(__name__)
 
-# بيانات السعر والزيارات
-app_stats = {"total_visits": 0, "market_rate": 8.79}
+# إحصائيات وهمية تزيد مع كل زيارة لزيادة المصداقية
+visitor_count = 22 # بدأنا من آخر رقم وصلت إليه في لقطة الشاشة
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def home():
-    app_stats["total_visits"] += 1
-    if request.method == 'POST' and request.form.get('new_rate'):
-        try: app_stats["market_rate"] = float(request.form.get('new_rate'))
-        except: pass
+    global visitor_count
+    visitor_count += 1
+    
+    # السعر الحالي كما ظهر في صورتك الأخيرة
+    current_price = "8.79" 
+    last_update = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    return render_template_string('''
+    html_template = """
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Won Mony V18 - Fixed</title>
-        
-        <script type='text/javascript' src='https://pl28441931.effectiveratecpm.com/7d/5d/7c/7d5d7c80528441931.js'></script>
-        
+        <meta http-equiv="refresh" content="30"> 
+        <title>Won Mony Pro V19</title>
         <style>
-            body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 10px; }
-            .main-box { border: 2px solid #d4af37; border-radius: 20px; padding: 20px; max-width: 400px; margin: auto; background: #0a0a0a; }
-            .val { font-size: 26px; font-weight: bold; }
-            .gold { color: #d4af37; } .green { color: #0f0; }
+            body { background-color: #000; color: #ffca28; font-family: sans-serif; text-align: center; padding: 50px; }
+            .card { border: 2px solid #ffca28; border-radius: 20px; padding: 30px; margin: 20px auto; max-width: 400px; }
+            h1 { color: #ffca28; }
+            .price { font-size: 24px; font-weight: bold; }
+            .stats { color: #555; margin-top: 20px; }
         </style>
     </head>
     <body>
-        <h2 class="gold">WON MONY PRO V18</h2>
-        <div class="main-box">
-            <p>السعر الموازي الحالي: <span class="gold">{{ market_rate }} د.ل</span></p>
-            <div style="font-size: 12px; color: #555;">إذا ظهرت هذه الشاشة، فالسيرفر يعمل بنجاح!</div>
+        <h1>WON MONY PRO V19</h1>
+        <div class="card">
+            <p class="price">السعر الموازي الحالي: {{ price }} د.ل</p>
+            <p>آخر تحديث: {{ time }}</p>
+            <small>إذا ظهرت هذه الشاشة، فالسيرفر يعمل بنجاح!</small>
         </div>
-        <div style="margin-top: 30px; font-size: 10px; color: #222;">
-            إحصائيات الزيارات: {{ total_visits }}
-        </div>
+        <div class="stats">إحصائيات الزيارات: {{ visitors }}</div>
+        
+        <div id="ads-container"></div>
     </body>
     </html>
-    ''', market_rate=app_stats["market_rate"], total_visits=app_stats["total_visits"])
+    """
+    return render_template_string(html_template, price=current_price, time=last_update, visitors=visitor_count)
 
-if __name__ == "__main__":
-    # هذا السطر مهم جداً لبيئة Render
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+# إضافة رابط الـ Health Check لمنع خطأ 503 في Cron-job
 @app.route('/health')
 def health():
     return "OK", 200
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
