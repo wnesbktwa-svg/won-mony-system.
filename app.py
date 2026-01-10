@@ -4,46 +4,69 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    # كود HTML احترافي يجلب السعر من المتصفح مباشرة لتفادي قيود السيرفر
+    # كود الواجهة المزدوجة (بيتكوين + دولار ليبيا)
     html_template = '''
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Won Mony Global V8</title>
+        <title>Won Mony - ليبيا</title>
         <style>
-            body { background: #000; color: #0f0; font-family: sans-serif; text-align: center; padding: 50px 20px; }
-            .card { border: 2px solid #0f0; border-radius: 20px; padding: 30px; background: #050505; box-shadow: 0 0 25px #0f0; max-width: 400px; margin: auto; }
-            .price { font-size: 48px; color: #fff; margin: 25px 0; font-weight: bold; text-shadow: 0 0 10px #0f0; }
-            .status-dot { height: 10px; width: 10px; background-color: #0f0; border-radius: 50%; display: inline-block; margin-left: 5px; }
-            .btn { background: #0f0; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; color: #000; font-size: 18px; transition: 0.3s; }
-            .btn:active { transform: scale(0.95); background: #fff; }
+            body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
+            .container { max-width: 450px; margin: auto; }
+            .card { border-radius: 20px; padding: 20px; margin-bottom: 20px; position: relative; overflow: hidden; border: 2px solid; }
+            
+            /* تصميم كرت البيتكوين */
+            .btc-card { border-color: #f7931a; box-shadow: 0 0 15px #f7931a; background: #111; }
+            /* تصميم كرت الدولار ليبيا */
+            .ly-card { border-color: #00ff00; box-shadow: 0 0 15px #00ff00; background: #111; }
+            
+            .label { font-size: 14px; color: #888; margin-bottom: 5px; }
+            .price { font-size: 35px; font-weight: bold; margin: 10px 0; }
+            .btc-price { color: #f7931a; }
+            .ly-price { color: #00ff00; }
+            
+            .update-btn { background: #333; color: #fff; border: 1px solid #555; padding: 12px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; }
+            .footer { margin-top: 30px; font-size: 12px; color: #444; }
         </style>
         <script>
-            async function fetchPrice() {
+            async function fetchGlobalPrices() {
                 try {
-                    const res = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
-                    const data = await res.json();
-                    const price = parseFloat(data.data.amount).toLocaleString(undefined, {minimumFractionDigits: 2});
-                    document.getElementById('btc-price').innerText = '$' + price;
-                    document.getElementById('status-text').innerText = 'متصل ومباشر';
+                    // جلب سعر البيتكوين
+                    const resBtc = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
+                    const dataBtc = await resBtc.json();
+                    const btcPrice = parseFloat(dataBtc.data.amount).toLocaleString(undefined, {minimumFractionDigits: 2});
+                    document.getElementById('btc-val').innerText = '$' + btcPrice;
                 } catch (e) {
-                    document.getElementById('btc-price').innerText = 'جاري المحاولة...';
+                    document.getElementById('btc-val').innerText = 'خطأ في الاتصال';
                 }
             }
-            setInterval(fetchPrice, 5000); // تحديث كل 5 ثواني
-            window.onload = fetchPrice;
+            setInterval(fetchGlobalPrices, 10000);
+            window.onload = fetchGlobalPrices;
         </script>
     </head>
     <body>
-        <div class="card">
-            <h1 style="font-size: 24px; letter-spacing: 1px;">WON MONY GLOBAL V8</h1>
-            <p style="color: #888;">سعر البيتكوين مباشر (BTC/USD)</p>
-            <div id="btc-price" class="price">جاري التحميل...</div>
-            <button class="btn" onclick="fetchPrice()">تحديث السعر الآن</button>
-            <div style="margin-top: 25px; font-size: 13px; color: #555;">
-                <span id="status-text">جاري الاتصال</span> <span class="status-dot"></span>
+        <div class="container">
+            <h2 style="color:#0f0;">WON MONY GLOBAL V9</h2>
+            <p style="color:#666; font-size:12px;">تحديث مباشر للأسعار</p>
+
+            <div class="card btc-card">
+                <div class="label">سعر البيتكوين العالمي (BTC)</div>
+                <div id="btc-val" class="price btc-price">جاري التحميل...</div>
+            </div>
+
+            <div class="card ly-card">
+                <div class="label">سعر الدولار في ليبيا (كاش)</div>
+                <div class="price ly-price">7.25 د.ل</div> 
+                <div style="font-size:11px; color:#555;">* يمكنك تعديل هذا السعر من الكود يدوياً</div>
+            </div>
+
+            <button class="update-btn" onclick="location.reload()">تحديث يدوي للبيانات</button>
+
+            <div class="footer">
+                برمج بواسطة: مبرمج ليبي طموح <br>
+                System Status: Active & Secured
             </div>
         </div>
     </body>
